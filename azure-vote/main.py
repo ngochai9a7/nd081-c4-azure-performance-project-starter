@@ -93,8 +93,7 @@ else:
 r = redis.Redis()
 
 """
-# The commented section below is used while deploying the application with two separate containers - 
-# One container for Redis and another for the frontend. 
+# comment when use 2 containers Redis and frontend 
 # Redis configurations
 redis_server = os.environ['REDIS']
 try:
