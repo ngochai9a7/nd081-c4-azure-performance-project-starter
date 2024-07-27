@@ -25,7 +25,6 @@ from opencensus.ext.flask.flask_middleware import FlaskMiddleware
 
 # Logging
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 logger.addHandler(AzureLogHandler(connection_string='InstrumentationKey=3055092f-550a-447b-b568-da745340470b'))
 
 
@@ -34,7 +33,7 @@ exporter = metrics_exporter.new_metrics_exporter(
     enable_standard_metrics=True,
     connection_string='InstrumentationKey=3055092f-550a-447b-b568-da745340470b'
 )
-logger.addHandler(exporter)
+
 
 # Tracing
 tracer = Tracer(
@@ -87,10 +86,13 @@ def index():
     if request.method == 'GET':
 
         # Get current values
-        vote1 = r.get(button1).decode('utf-8')
         # TODO: use tracer object to trace cat vote
+        vote1 = r.get(button1).decode('utf-8')
+        tracer.span(name="CatsVote")
+        # TODO: use tracer object to trace dog vote        
         vote2 = r.get(button2).decode('utf-8')
-        # TODO: use tracer object to trace dog vote
+        tracer.span(name="DogsVote")
+
 
         # Return index with values
         return render_template("index.html", value1=int(vote1), value2=int(vote2), button1=button1, button2=button2, title=title)
@@ -104,12 +106,12 @@ def index():
             r.set(button2,0)
             vote1 = r.get(button1).decode('utf-8')
             properties = {'custom_dimensions': {'Cats Vote': vote1}}
-            logger.info("Cats Vote", extra=properties)
+            logger.warning('Cats', extra=properties)
             # TODO: use logger object to log cat vote
 
             vote2 = r.get(button2).decode('utf-8')
             properties = {'custom_dimensions': {'Dogs Vote': vote2}}
-            logger.info("Dogs Vote", extra=properties)
+            logger.warning('Dogs', extra=properties)
             # TODO: use logger object to log dog vote
 
             return render_template("index.html", value1=int(vote1), value2=int(vote2), button1=button1, button2=button2, title=title)
@@ -128,7 +130,7 @@ def index():
             return render_template("index.html", value1=int(vote1), value2=int(vote2), button1=button1, button2=button2, title=title)
 
 if __name__ == "__main__":
-    # TODO: Use the statement below when running locally
-    # app.run() 
-    # TODO: Use the statement below before deployment to VMSS
+    # comment line below when deploying to VMSS
+    #app.run() # local
+    # uncomment the line below before deployment to VMSS
     app.run(host='0.0.0.0', threaded=True, debug=True) # remote
